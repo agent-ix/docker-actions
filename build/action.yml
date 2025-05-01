@@ -1,0 +1,83 @@
+name: "Build and Push Docker Image"
+description: "Builds and pushes a Docker image using poetry versioning and GHCR caching"
+
+inputs:
+  registry_user:
+    description: "Registry username"
+    required: true
+  registry_password:
+    description: "Registry password"
+    required: true
+  artifact:
+    description: "Image build metadata artifact (e.g. image.json)"
+    default: "image.json"
+    required: true
+  GITHUB_TOKEN:
+    description: "GitHub token for authentication"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact }}
+        path: .
+
+    - name: Load metadata
+      id: meta
+      shell: bash
+      run: |
+        cat ${{ inputs.artifact }}
+        echo "registry=$(jq -r '.registry' "${{ inputs.artifact }}")" >> "$GITHUB_OUTPUT"
+        echo "repository=$(jq -r '.repository' "${{ inputs.artifact }}")" >> "$GITHUB_OUTPUT"
+        echo "image=$(jq -r '.image' "${{ inputs.artifact }}")" >> "$GITHUB_OUTPUT"
+        echo "tag=$(jq -r '.tag' "${{ inputs.artifact }}")" >> "$GITHUB_OUTPUT"
+        echo "url=$(jq -r '.url' "${{ inputs.artifact }}")" >> "$GITHUB_OUTPUT"
+        echo "description=$(jq -r '.description' "${{ inputs.artifact }}")" >> "$GITHUB_OUTPUT"
+        echo "version=$(jq -r '.version' "${{ inputs.artifact }}")" >> "$GITHUB_OUTPUT"
+        echo "source=$(jq -r '.source' "${{ inputs.artifact }}")" >> "$GITHUB_OUTPUT"
+
+    - name: Test echo metadata
+      shell: bash
+      run: |
+          echo "registry=${{ steps.meta.outputs.registry }}"
+          echo "image=${{ steps.meta.outputs.image }}"
+          echo "url=${{ steps.meta.outputs.url }}"
+          echo "description=${{ steps.meta.outputs.description }}"
+          echo "version=${{ steps.meta.outputs.version }}"
+          echo "source=${{ steps.meta.outputs.source }}"
+
+    - name: Docker login
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ steps.meta.outputs.registry }}
+        username: ${{ inputs.registry_user }}
+        password: ${{ inputs.registry_password }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build and push image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.url }}
+        cache-from: type=registry,ref=${{ steps.meta.outputs.image }}:buildcache
+        cache-to: type=registry,ref=${{ steps.meta.outputs.image }}:buildcache,mode=max
+        build-args: |
+          BUILDKIT_INLINE_CACHE=1
+        labels: |
+          org.opencontainers.image.source=${{ steps.meta.outputs.source }}
+          org.opencontainers.image.description=${{ steps.meta.outputs.description }}
+          org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+
+    - name: Print image summary
+      uses: agent-ix/python-service-actions/ghcr-docker-summary@main
+      with:
+        repository: ${{ steps.meta.outputs.repository }}
+        tag: ${{ steps.meta.outputs.tag }}
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}

@@ -1,0 +1,46 @@
+name: "Pull Docker Image"
+description: "Authenticates to the registry and pulls the image described in the image artifact"
+
+inputs:
+  artifact:
+    description: "Name of the image metadata artifact"
+    required: false
+    default: "image.json"
+  registry_user:
+    description: "Registry username"
+    required: true
+  registry_password:
+    description: "Registry password"
+    required: true
+
+outputs:
+  url:
+    description: "Fully-qualified image URL with tag"
+    value: ${{ steps.meta.outputs.url }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact }}
+        path: .
+
+    - name: Extract image metadata
+      id: meta
+      shell: bash
+      run: |
+        echo "registry=$(jq -r '.registry' ${{ inputs.artifact }})" >> "$GITHUB_OUTPUT"
+        echo "url=$(jq -r '.url' ${{ inputs.artifact }})" >> "$GITHUB_OUTPUT"
+
+    - name: Docker login
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ steps.meta.outputs.registry }}
+        username: ${{ inputs.registry_user }}
+        password: ${{ inputs.registry_password }}
+
+    - name: Pull Docker image
+      shell: bash
+      run: |
+        docker pull ${{ steps.meta.outputs.url }}
