@@ -13,6 +13,24 @@ inputs:
     description: "Registry password"
     required: true
 
+outputs:
+  registry:
+    value: ${{ steps.meta.outputs.registry }}
+  image:
+    value: ${{ steps.meta.outputs.image }}
+  url:
+    value: ${{ steps.meta.outputs.url }}
+  repository:
+    value: ${{ steps.meta.outputs.repository }}
+  tag:
+    value: ${{ steps.meta.outputs.tag }}
+  description:
+    value: ${{ steps.meta.outputs.description }}
+  source:
+    value: ${{ steps.meta.outputs.source }}
+  version:
+    value: ${{ steps.meta.outputs.version }}
+
 runs:
   using: "composite"
   steps:
