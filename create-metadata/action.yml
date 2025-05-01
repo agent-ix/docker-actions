@@ -1,0 +1,80 @@
+name: "Create Metadata"
+description: "Generates standardized image.json metadata file and exposes all values as outputs"
+
+inputs:
+  registry:
+    description: "Container registry"
+    required: false
+    default: "ghcr.io"
+  repository:
+    description: "Repository name (e.g. org/project). Defaults to github.repository"
+    required: false
+  tag_prefix:
+    description: "Optional prefix for tag (e.g., dev, base)"
+    required: false
+  version:
+    description: "Version or tag (e.g., v1.2.3)"
+    required: true
+  description:
+    description: "Image description"
+    required: true
+  artifact:
+    description: "Name of the output artifact"
+    required: false
+    default: "image.json"
+
+outputs:
+  registry:
+    value: ${{ steps.extract.outputs.registry }}
+  repository:
+    value: ${{ steps.extract.outputs.repository }}
+  tag:
+    value: ${{ steps.extract.outputs.tag }}
+  image:
+    value: ${{ steps.extract.outputs.image }}
+  url:
+    value: ${{ steps.extract.outputs.url }}
+  description:
+    value: ${{ steps.extract.outputs.description }}
+  source:
+    value: ${{ steps.extract.outputs.source }}
+  version:
+    value: ${{ steps.extract.outputs.version }}
+
+
+runs:
+  using: "composite"
+  steps:
+    - name: Compute and write image.json
+      id: meta
+      shell: bash
+      run: |
+        REPO="${{ inputs.repository || github.repository }}"
+        TAG="${{ inputs.tag_prefix }}${{ inputs.tag_prefix && '-' || '' }}${{ inputs.version }}"
+        IMAGE="${{ inputs.registry }}/$REPO"
+        URL="$IMAGE:$TAG"
+        SOURCE="https://github.com/${{ github.repository }}"
+
+        cat <<EOF > ${{ inputs.artifact }}
+        {
+          "registry": "${{ inputs.registry }}",
+          "repository": "$REPO",
+          "tag": "$TAG",
+          "image": "$IMAGE",
+          "url": "$URL",
+          "description": "${{ inputs.description }}",
+          "source": "$SOURCE",
+          "version": "${{ inputs.version }}"
+        }
+        EOF
+
+    - name: Export all fields as outputs
+      id: extract
+      shell: bash
+      run: |
+        jq -r 'to_entries[] | "\(.key)=\(.value)"' "${{ inputs.artifact }}" >> "$GITHUB_OUTPUT"
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact }}
+        path: ${{ inputs.artifact }}

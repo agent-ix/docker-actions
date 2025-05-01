@@ -13,25 +13,14 @@ inputs:
     description: "Registry password"
     required: true
 
-outputs:
-  url:
-    description: "Fully-qualified image URL with tag"
-    value: ${{ steps.meta.outputs.url }}
-
 runs:
   using: "composite"
   steps:
-    - uses: actions/download-artifact@v4
-      with:
-        name: ${{ inputs.artifact }}
-        path: .
-
-    - name: Extract image metadata
+    - name: Load image metadata
       id: meta
-      shell: bash
-      run: |
-        echo "registry=$(jq -r '.registry' ${{ inputs.artifact }})" >> "$GITHUB_OUTPUT"
-        echo "url=$(jq -r '.url' ${{ inputs.artifact }})" >> "$GITHUB_OUTPUT"
+      uses: agent-ix/docker-actions/load-metadata@main
+      with:
+        artifact: ${{ inputs.artifact }}
 
     - name: Docker login
       uses: docker/login-action@v3

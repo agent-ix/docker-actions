@@ -1,0 +1,38 @@
+name: "Load Metadata"
+description: "Downloads and loads image.json, exposing all fields as outputs"
+
+inputs:
+  artifact:
+    description: "Artifact name (default: image.json)"
+    required: false
+    default: "image.json"
+  path:
+    description: "Optional directory to extract to"
+    required: false
+    default: "."
+
+outputs:
+  # Outputs are dynamically generated at runtime
+  image:
+    value: ${{ steps.meta.outputs.image }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact }}
+        path: ${{ inputs.path }}
+
+    - name: Load and export image.json values
+      id: meta
+      shell: bash
+      run: |
+        FILE="${{ inputs.path }}/${{ inputs.artifact }}"
+        if [[ ! -f "$FILE" ]]; then
+          echo "❌ Error: $FILE not found"
+          exit 1
+        fi
+
+        jq -r 'to_entries[] | "\(.key)=\(.value)"' "$FILE" >> "$GITHUB_OUTPUT"
