@@ -35,4 +35,6 @@ runs:
           exit 1
         fi
 
+        echo "Loading metadata from $FILE:"
+        cat "$FILE"
         jq -r 'to_entries[] | "\(.key)=\(.value)"' "$FILE" >> "$GITHUB_OUTPUT"
