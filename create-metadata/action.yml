@@ -68,6 +68,9 @@ runs:
         }
         EOF
 
+        echo "Image metadata:"
+        jq -r 'to_entries[] | "\(.key)=\(.value)"' "${{ inputs.artifact }}"
+
     - name: Export all fields as outputs
       id: extract
       shell: bash
