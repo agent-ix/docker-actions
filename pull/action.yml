@@ -51,3 +51,14 @@ runs:
       shell: bash
       run: |
         docker pull ${{ steps.meta.outputs.url }}
+
+    - name: Tag image as latest
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        SOURCE_IMAGE="${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}"
+        TARGET_IMAGE="${{ steps.meta.outputs.repository }}:latest"
+
+        echo "🔄 Tagging $SOURCE_IMAGE -> $TARGET_IMAGE (local only)"
+        docker tag "$SOURCE_IMAGE" "$TARGET_IMAGE"
