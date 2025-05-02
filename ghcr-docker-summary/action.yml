@@ -36,10 +36,12 @@ runs:
       shell: bash
       run: |
         IMAGE="${{ inputs.repository }}"
-        IMAGE_NAME="${IMAGE##*/}"
+        TAG="${{ inputs.tag }}"
+        IMAGE_NAME="$(basename "$IMAGE")"
+
         echo "### 🐳 Docker Image" >> "$GITHUB_STEP_SUMMARY"
-        echo "- *${{ inputs.tag }}* [registry](https://github.com/orgs/${{ github.repository_owner }}/packages/container/$IMAGE_NAME/${{ steps.get-image-id.outputs.image_id }}?tag=${{ inputs.tag }})" >> "$GITHUB_STEP_SUMMARY"
+        echo "- *$TAG* [registry](https://github.com/orgs/${{ github.repository_owner }}/packages/container/$IMAGE_NAME/${{ steps.get-image-id.outputs.image_id }}?tag=$TAG)" >> "$GITHUB_STEP_SUMMARY"
         echo "" >> "$GITHUB_STEP_SUMMARY"
         echo '```bash' >> "$GITHUB_STEP_SUMMARY"
-        echo "docker pull ghcr.io/${{ inputs.repository }}:${{ inputs.tag }}" >> "$GITHUB_STEP_SUMMARY"
+        echo "docker pull ghcr.io/$IMAGE:$TAG" >> "$GITHUB_STEP_SUMMARY"
         echo '```' >> "$GITHUB_STEP_SUMMARY"
