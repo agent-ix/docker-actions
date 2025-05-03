@@ -117,9 +117,9 @@ runs:
 
         # convert floating tags to full urls
         FLOATING_URLS=()
-        IFS=',' read -ra TAGS <<< "${{ steps.floating_tags.outputs.floating_tags }}"
-        for TAG in "${TAGS[@]}"; do
-          FLOATING_URLS+=("$IMAGE:$TAG")
+        IFS=',' read -ra FLOATING_TAGS <<< "${{ steps.floating_tags.outputs.floating_tags }}"
+        for FLOATING_TAG in "${FLOATING_TAGS[@]}"; do
+          FLOATING_URLS+=("$IMAGE:$FLOATING_TAG")
         done
 
         # join floating urls with commas
