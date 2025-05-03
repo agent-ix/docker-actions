@@ -134,7 +134,7 @@ runs:
           "url": "$URL",
           "description": "${{ inputs.description }}",
           "source": "$SOURCE",
-          "version": "${{ inputs.version }}"
+          "version": "${{ inputs.version }}",
           "extra_urls": "$URLS",
         }
         EOF
