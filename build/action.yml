@@ -76,7 +76,7 @@ runs:
           org.opencontainers.image.version=${{ steps.meta.outputs.version }}
 
     - name: Print image summary
-      uses: agent-ix/python-service-actions/ghcr-docker-summary@main
+      uses: agent-ix/docker-actions/ghcr-docker-summary@main
       with:
         repository: ${{ steps.meta.outputs.repository }}
         tag: ${{ steps.meta.outputs.tag }}
