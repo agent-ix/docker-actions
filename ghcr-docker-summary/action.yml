@@ -39,6 +39,10 @@ runs:
         TAG="${{ inputs.tag }}"
         IMAGE_NAME="$(basename "$IMAGE")"
         REPO_OWNER="${{ github.repository_owner }}"
+  
+        echo "Image: $IMAGE"
+        echo "Tag: $TAG"
+        echo "Owner: $REPO_OWNER"
 
         echo "### 🐳 Docker Image" >> "$GITHUB_STEP_SUMMARY"
         echo "- *$TAG* [registry](https://github.com/orgs/$REPO_OWNER/packages/container/$IMAGE_NAME?tag=$TAG)" >> "$GITHUB_STEP_SUMMARY"
