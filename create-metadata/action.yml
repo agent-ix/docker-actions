@@ -55,7 +55,7 @@ runs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Get PR
+    - name: Get Floating Tags
       id: floating_tags
       shell: bash
       env:
