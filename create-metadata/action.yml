@@ -6,6 +6,9 @@ inputs:
     description: "Container registry"
     required: false
     default: "ghcr.io"
+  GITHUB_TOKEN:
+    description: "GitHub token for authentication"
+    required: true
   repository:
     description: "Repository name (e.g. org/project). Defaults to github.repository"
     required: false
@@ -56,7 +59,7 @@ runs:
       id: floating_tags
       shell: bash
       env:
-        GH_TOKEN: ${{ inputs.registry_password }}
+        GH_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: |
           # tags such as "latest", "main", "pr-<num>" that should be added
           # depending on context of the workflow.
