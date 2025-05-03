@@ -30,6 +30,8 @@ outputs:
     value: ${{ steps.meta.outputs.version }}
   extra_urls:
     value: ${{ steps.meta.outputs.extra_urls }}
+  extra_tags:
+    value: ${{ steps.meta.outputs.extra_tags }}
 
 
 runs:

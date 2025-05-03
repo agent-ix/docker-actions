@@ -47,6 +47,10 @@ outputs:
     value: ${{ steps.extract.outputs.source }}
   version:
     value: ${{ steps.extract.outputs.version }}
+  extra_urls:
+    value: ${{ steps.extract.outputs.extra_urls }}
+  extra_tags:
+    value: ${{ steps.extract.outputs.extra_tags }}
 
 
 runs:
@@ -123,7 +127,7 @@ runs:
         done
 
         # join floating urls with commas
-        URLS=$(IFS=,; echo "${FLOATING_URLS[*]}")
+        FLOATING_URLS=$(IFS=,; echo "${FLOATING_URLS[*]}")
 
         cat <<EOF > ${{ inputs.artifact }}
         {
@@ -135,7 +139,8 @@ runs:
           "description": "${{ inputs.description }}",
           "source": "$SOURCE",
           "version": "${{ inputs.version }}",
-          "extra_urls": "$URLS"
+          "extra_urls": "$FLOATING_URLS",
+          "extra_tags": "$FLOATING_TAGS"
         }
         EOF
 
