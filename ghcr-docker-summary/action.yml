@@ -43,5 +43,5 @@ runs:
         echo "- *$TAG* [registry](https://github.com/orgs/${{ github.repository_owner }}/packages/container/$IMAGE_NAME/${{ steps.get-image-id.outputs.image_id }}?tag=$TAG)" >> "$GITHUB_STEP_SUMMARY"
         echo "" >> "$GITHUB_STEP_SUMMARY"
         echo '```bash' >> "$GITHUB_STEP_SUMMARY"
-        echo "docker pull ghcr.io/$IMAGE:$TAG" >> "$GITHUB_STEP_SUMMARY"
+        echo "docker pull ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:$TAG" >> "$GITHUB_STEP_SUMMARY"
         echo '```' >> "$GITHUB_STEP_SUMMARY"
