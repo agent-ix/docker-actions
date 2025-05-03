@@ -28,6 +28,8 @@ outputs:
     value: ${{ steps.meta.outputs.source }}
   version:
     value: ${{ steps.meta.outputs.version }}
+  extra_urls:
+    value: ${{ steps.meta.outputs.extra_urls }}
 
 
 runs:

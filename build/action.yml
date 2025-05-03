@@ -26,19 +26,11 @@ runs:
         name: ${{ inputs.artifact }}
         path: .
 
-    - name: Load metadata
+    - name: Load image metadata
       id: meta
-      shell: bash
-      run: |
-        cat ${{ inputs.artifact }}
-        echo "registry=$(jq -r '.registry' "${{ inputs.artifact }}")" >> "$GITHUB_OUTPUT"
-        echo "repository=$(jq -r '.repository' "${{ inputs.artifact }}")" >> "$GITHUB_OUTPUT"
-        echo "image=$(jq -r '.image' "${{ inputs.artifact }}")" >> "$GITHUB_OUTPUT"
-        echo "tag=$(jq -r '.tag' "${{ inputs.artifact }}")" >> "$GITHUB_OUTPUT"
-        echo "url=$(jq -r '.url' "${{ inputs.artifact }}")" >> "$GITHUB_OUTPUT"
-        echo "description=$(jq -r '.description' "${{ inputs.artifact }}")" >> "$GITHUB_OUTPUT"
-        echo "version=$(jq -r '.version' "${{ inputs.artifact }}")" >> "$GITHUB_OUTPUT"
-        echo "source=$(jq -r '.source' "${{ inputs.artifact }}")" >> "$GITHUB_OUTPUT"
+      uses: agent-ix/docker-actions/load-metadata@main
+      with:
+        artifact: ${{ inputs.artifact }}
 
     - name: Test echo metadata
       shell: bash
@@ -49,6 +41,19 @@ runs:
           echo "description=${{ steps.meta.outputs.description }}"
           echo "version=${{ steps.meta.outputs.version }}"
           echo "source=${{ steps.meta.outputs.source }}"
+          echo "extra_urls=${{ steps.meta.outputs.extra_urls }}"
+
+    - name: Create tags variable
+      id: tags
+      shell: bash
+      run: |
+        MAIN_TAG="${{ steps.meta.outputs.url }}"
+        EXTRA_TAGS="${{ steps.meta.outputs.extra_urls }}"
+        if [[ -z "$EXTRA_TAGS" || "$EXTRA_TAGS" == "null" ]]; then
+          echo "tags=$MAIN_TAG" >> "$GITHUB_OUTPUT"
+        else
+          echo "tags=$MAIN_TAG,$EXTRA_TAGS" >> "$GITHUB_OUTPUT"
+        fi
 
     - name: Docker login
       uses: docker/login-action@v3
@@ -65,7 +70,7 @@ runs:
       with:
         context: .
         push: true
-        tags: ${{ steps.meta.outputs.url }}
+        tags: ${{ steps.tags.outputs.tags }}
         cache-from: type=registry,ref=${{ steps.meta.outputs.image }}:buildcache
         cache-to: type=registry,ref=${{ steps.meta.outputs.image }}:buildcache,mode=max
         build-args: |
