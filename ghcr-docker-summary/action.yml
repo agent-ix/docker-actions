@@ -57,4 +57,4 @@ runs:
           done
         fi
 
-echo "```" >> "$GITHUB_STEP_SUMMARY"
+        echo '```' >> "$GITHUB_STEP_SUMMARY"
