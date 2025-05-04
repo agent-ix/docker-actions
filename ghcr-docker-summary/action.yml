@@ -50,6 +50,7 @@ runs:
         echo "" >> "$GITHUB_STEP_SUMMARY"
         echo '```bash' >> "$GITHUB_STEP_SUMMARY"
         echo "docker pull ghcr.io/$IMAGE:$TAG" >> "$GITHUB_STEP_SUMMARY"
+        echo '```' >> "$GITHUB_STEP_SUMMARY"
 
         if [[ -n "$EXTRA_TAGS" ]]; then
           echo "" >> "$GITHUB_STEP_SUMMARY"
@@ -60,5 +61,3 @@ runs:
             echo "docker pull ghcr.io/$IMAGE:$EXTRA_TAG" >> "$GITHUB_STEP_SUMMARY"
           done
         fi
-
-        echo '```' >> "$GITHUB_STEP_SUMMARY"
