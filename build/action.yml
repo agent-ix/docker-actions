@@ -85,4 +85,5 @@ runs:
       with:
         repository: ${{ steps.meta.outputs.repository }}
         tag: ${{ steps.meta.outputs.tag }}
+        extra_tags: ${{ steps.meta.outputs.extra_tags }}
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}

@@ -9,6 +9,10 @@ inputs:
   tag:
     required: true
     description: Image tag to match
+  extra_tags:
+    description: Comma-separated list of additional tags to include in the summary
+    required: false
+    default: ""
   GITHUB_TOKEN:
     description: GitHub token for authentication
     required: true
