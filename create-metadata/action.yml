@@ -76,6 +76,7 @@ runs:
         SOURCE="https://github.com/${{ github.repository }}"
 
         # convert floating tags to full urls
+        echo "Dist tags: ${{ steps.dist_tags.outputs.dist_tags }}"
         FLOATING_URLS=()
         IFS=',' read -ra FLOATING_TAGS <<< "${{ steps.dist_tags.outputs.dist_tags }}"
         for FLOATING_TAG in "${FLOATING_TAGS[@]}"; do
