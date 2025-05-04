@@ -46,7 +46,7 @@ runs:
         EXTRA_TAGS="${{ inputs.extra_tags }}"
 
         echo "### 🐳 Docker Image" >> "$GITHUB_STEP_SUMMARY"
-        echo "- *$TAG* [registry](https://github.com/orgs/$REPO_OWNER/packages/container/$IMAGE_NAME?tag=$TAG)" >> "$GITHUB_STEP_SUMMARY"
+        echo "- **$TAG** [registry](https://github.com/orgs/$REPO_OWNER/packages/container/$IMAGE_NAME?tag=$TAG)" >> "$GITHUB_STEP_SUMMARY"
         echo "" >> "$GITHUB_STEP_SUMMARY"
         echo '```bash' >> "$GITHUB_STEP_SUMMARY"
         echo "docker pull ghcr.io/$IMAGE:$TAG" >> "$GITHUB_STEP_SUMMARY"
@@ -57,7 +57,9 @@ runs:
           echo "### 🏷️ Additional Tags" >> "$GITHUB_STEP_SUMMARY"
           IFS=',' read -ra TAGS <<< "$EXTRA_TAGS"
           for EXTRA_TAG in "${TAGS[@]}"; do
-            echo "- *$EXTRA_TAG* [registry](https://github.com/orgs/$REPO_OWNER/packages/container/$IMAGE_NAME?tag=$EXTRA_TAG)" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **$EXTRA_TAG** [registry](https://github.com/orgs/$REPO_OWNER/packages/container/$IMAGE_NAME?tag=$EXTRA_TAG)" >> "$GITHUB_STEP_SUMMARY"
+            echo '```bash' >> "$GITHUB_STEP_SUMMARY"
             echo "docker pull ghcr.io/$IMAGE:$EXTRA_TAG" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
           done
         fi
