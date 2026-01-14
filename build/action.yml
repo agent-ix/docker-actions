@@ -16,7 +16,15 @@ inputs:
     description: "GitHub token for authentication"
     required: true
   extra_index_url:
-    description: "Extra PyPI index URL for internal packages"
+    description: "Extra PyPI index URL for internal packages (deprecated, use pypi_user/pypi_pass)"
+    required: false
+    default: ""
+  pypi_user:
+    description: "PyPI username for internal registry (e.g. _json_key_base64)"
+    required: false
+    default: ""
+  pypi_pass:
+    description: "PyPI password/token (base64-encoded for Google Artifact Registry)"
     required: false
     default: ""
 
@@ -80,6 +88,9 @@ runs:
         build-args: |
           BUILDKIT_INLINE_CACHE=1
           EXTRA_INDEX_URL=${{ inputs.extra_index_url }}
+        secrets: |
+          pypi_user=${{ inputs.pypi_user }}
+          pypi_pass=${{ inputs.pypi_pass }}
         labels: |
           org.opencontainers.image.source=${{ steps.meta.outputs.source }}
           org.opencontainers.image.description=${{ steps.meta.outputs.description }}
