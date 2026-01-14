@@ -15,6 +15,10 @@ inputs:
   GITHUB_TOKEN:
     description: "GitHub token for authentication"
     required: true
+  extra_index_url:
+    description: "Extra PyPI index URL for internal packages"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -75,6 +79,7 @@ runs:
         cache-to: type=registry,ref=${{ steps.meta.outputs.image }}:buildcache,mode=max
         build-args: |
           BUILDKIT_INLINE_CACHE=1
+          EXTRA_INDEX_URL=${{ inputs.extra_index_url }}
         labels: |
           org.opencontainers.image.source=${{ steps.meta.outputs.source }}
           org.opencontainers.image.description=${{ steps.meta.outputs.description }}
