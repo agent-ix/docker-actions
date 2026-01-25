@@ -58,7 +58,7 @@ runs:
         set -euo pipefail
 
         SOURCE_IMAGE="${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}"
-        TARGET_IMAGE="${{ steps.meta.outputs.repository }}:latest"
+        TARGET_IMAGE="${{ steps.meta.outputs.image }}:latest"
 
         echo "🔄 Tagging $SOURCE_IMAGE -> $TARGET_IMAGE (local only)"
         docker tag "$SOURCE_IMAGE" "$TARGET_IMAGE"
