@@ -91,6 +91,7 @@ runs:
         secrets: |
           pypi_user=${{ inputs.pypi_user }}
           pypi_pass=${{ inputs.pypi_pass }}
+          github_token=${{ inputs.GITHUB_TOKEN }}
         labels: |
           org.opencontainers.image.source=${{ steps.meta.outputs.source }}
           org.opencontainers.image.description=${{ steps.meta.outputs.description }}
