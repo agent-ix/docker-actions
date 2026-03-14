@@ -5,7 +5,7 @@ org: agent-ix
 component_type: github-actions
 implementation_language: none
 depends_on: []
-standards_alignment:
+standards_alignment: []
 ---
 
 # Docker Actions Specification
@@ -13,4 +13,3 @@ standards_alignment:
 ## Overview
 
 Docker Actions provides reusable GitHub Actions for Docker build, push, and deployment workflows.
-```
