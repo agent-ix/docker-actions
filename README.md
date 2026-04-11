@@ -20,6 +20,7 @@ Build and push a Docker image using metadata from an `image.json` artifact.
 | `registry_password` | Password/token for Docker registry         | ✅        | —            |
 | `artifact`          | Name of the image metadata artifact (JSON) | ✅        | `image.json` |
 | `GITHUB_TOKEN`      | GitHub token for `ghcr-docker-summary`     | ✅        | —            |
+| `extra_build_args`  | Additional Docker build-args (newline-separated `KEY=VALUE` pairs) | ❌ | `""` |
 
 **Behavior:**
 

@@ -31,6 +31,10 @@ inputs:
     description: "Additional Docker build-args (newline-separated KEY=VALUE pairs)"
     required: false
     default: ""
+  npm_registry_token:
+    description: "NPM registry auth token for @agent-ix scoped packages"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -97,6 +101,7 @@ runs:
           pypi_user=${{ inputs.pypi_user }}
           pypi_pass=${{ inputs.pypi_pass }}
           github_token=${{ inputs.GITHUB_TOKEN }}
+          npm_token=${{ inputs.npm_registry_token }}
         labels: |
           org.opencontainers.image.source=${{ steps.meta.outputs.source }}
           org.opencontainers.image.description=${{ steps.meta.outputs.description }}
