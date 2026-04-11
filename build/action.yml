@@ -27,6 +27,10 @@ inputs:
     description: "PyPI password/token (base64-encoded for Google Artifact Registry)"
     required: false
     default: ""
+  extra_build_args:
+    description: "Additional Docker build-args (newline-separated KEY=VALUE pairs)"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -88,6 +92,7 @@ runs:
         build-args: |
           BUILDKIT_INLINE_CACHE=1
           EXTRA_INDEX_URL=${{ inputs.extra_index_url }}
+          ${{ inputs.extra_build_args }}
         secrets: |
           pypi_user=${{ inputs.pypi_user }}
           pypi_pass=${{ inputs.pypi_pass }}
