@@ -39,6 +39,18 @@ inputs:
     description: "Whether to checkout the repository before building"
     required: false
     default: "true"
+  helm_chart_path:
+    description: "Optional path to an app Helm chart to package and publish"
+    required: false
+    default: ""
+  helm_chart_registry:
+    description: "Registry host for OCI Helm chart publishing"
+    required: false
+    default: "ghcr.io"
+  helm_chart_repository:
+    description: "OCI repository path for Helm charts (e.g. agent-ix/charts)"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -119,3 +131,50 @@ runs:
         tag: ${{ steps.meta.outputs.tag }}
         extra_tags: ${{ steps.meta.outputs.extra_tags }}
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+
+    - name: Set up Helm
+      if: ${{ inputs.helm_chart_path != '' }}
+      uses: azure/setup-helm@v4
+
+    - name: Validate Helm chart publish inputs
+      if: ${{ inputs.helm_chart_path != '' }}
+      shell: bash
+      run: |
+        if [[ -z "${{ inputs.helm_chart_repository }}" ]]; then
+          echo "helm_chart_repository is required when helm_chart_path is set" >&2
+          exit 1
+        fi
+
+    - name: Helm registry login
+      if: ${{ inputs.helm_chart_path != '' }}
+      shell: bash
+      run: |
+        echo "${{ inputs.registry_password }}" | helm registry login "${{ inputs.helm_chart_registry }}" \
+          --username "${{ inputs.registry_user }}" \
+          --password-stdin
+
+    - name: Package and push Helm chart
+      if: ${{ inputs.helm_chart_path != '' }}
+      shell: bash
+      env:
+        CHART_PATH: ${{ inputs.helm_chart_path }}
+        CHART_REGISTRY: ${{ inputs.helm_chart_registry }}
+        CHART_REPOSITORY: ${{ inputs.helm_chart_repository }}
+        CHART_VERSION: ${{ steps.meta.outputs.version }}
+      run: |
+        mkdir -p dist/charts
+        helm dependency build "$CHART_PATH"
+        helm package "$CHART_PATH" \
+          --version "$CHART_VERSION" \
+          --app-version "$CHART_VERSION" \
+          --destination dist/charts
+        CHART_PACKAGE=$(find dist/charts -maxdepth 1 -name '*.tgz' | head -n 1)
+        if [[ -z "$CHART_PACKAGE" ]]; then
+          echo "No packaged chart produced for $CHART_PATH" >&2
+          exit 1
+        fi
+        helm push "$CHART_PACKAGE" "oci://$CHART_REGISTRY/$CHART_REPOSITORY"
+        echo "### ⛵ Helm Chart Published" >> "$GITHUB_STEP_SUMMARY"
+        echo "- Chart path: \`$CHART_PATH\`" >> "$GITHUB_STEP_SUMMARY"
+        echo "- Version: \`$CHART_VERSION\`" >> "$GITHUB_STEP_SUMMARY"
+        echo "- OCI ref: \`oci://$CHART_REGISTRY/$CHART_REPOSITORY\`" >> "$GITHUB_STEP_SUMMARY"
