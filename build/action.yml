@@ -35,11 +35,16 @@ inputs:
     description: "NPM registry auth token for @agent-ix scoped packages"
     required: false
     default: ""
+  checkout:
+    description: "Whether to checkout the repository before building"
+    required: false
+    default: "true"
 
 runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v4
+      if: ${{ inputs.checkout != 'false' }}
 
     - uses: actions/download-artifact@v4
       with:
