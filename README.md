@@ -1,6 +1,6 @@
 # 🛠 Docker Actions
 
-> A set of composite GitHub Actions for authenticated Docker image builds, pulls, and registry summary output using metadata from `image.json`.
+> A set of composite GitHub Actions for authenticated Docker image builds, pulls, Helm chart publishing, and registry summary output using metadata artifacts.
 
 ---
 
@@ -88,6 +88,44 @@ Outputs a summary of a GHCR-hosted image and resolves its internal image ID usin
 - Writes a Markdown-formatted summary to `$GITHUB_STEP_SUMMARY`:
   - Image tag with registry link
   - Docker pull command in a code block
+
+---
+
+### 📦 `helm-publish`
+
+**Path:** `helm-publish/action.yml`
+
+Package and push a Helm chart to an OCI-compatible registry (GHCR by default).
+
+**Inputs:**
+
+| Name                | Description                                          | Required | Default      |
+| ------------------- | ---------------------------------------------------- | -------- | ------------ |
+| `registry`          | OCI registry hostname                                | ❌        | `ghcr.io`    |
+| `registry_user`     | Registry username                                    | ✅        | —            |
+| `registry_password` | Registry password/token                              | ✅        | —            |
+| `chart_path`        | Path to chart directory (containing `Chart.yaml`)    | ❌        | `.`          |
+| `version`           | Version override (defaults to `Chart.yaml` version)  | ❌        | —            |
+| `repository`        | OCI repo namespace (e.g. `agent-ix`)                 | ❌        | repo owner   |
+| `artifact`          | Name of the output artifact                          | ❌        | `helm.json`  |
+
+**Outputs:**
+
+| Name         | Description                                    |
+| ------------ | ---------------------------------------------- |
+| `url`        | Full OCI URL of the pushed chart               |
+| `chart`      | Chart name (from `Chart.yaml`)                 |
+| `version`    | Chart version (input override or `Chart.yaml`) |
+| `repository` | OCI repository namespace used                  |
+
+**Behavior:**
+
+- Reads chart name/version from `Chart.yaml` (version input overrides)
+- Logs in to the OCI registry using `helm registry login`
+- Packages the chart with `helm package`
+- Pushes to `oci://<registry>/<repository>` with `helm push`
+- Writes a `helm.json` artifact with chart metadata
+- Outputs a summary with the chart URL and pull command
 
 ---
 

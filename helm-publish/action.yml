@@ -1,0 +1,129 @@
+name: "Helm Publish"
+description: "Packages and pushes a Helm chart to an OCI-compatible registry"
+
+inputs:
+  registry:
+    description: "OCI registry hostname"
+    required: false
+    default: "ghcr.io"
+  registry_user:
+    description: "Registry username"
+    required: true
+  registry_password:
+    description: "Registry password/token"
+    required: true
+  chart_path:
+    description: "Path to the chart directory (containing Chart.yaml)"
+    required: false
+    default: "."
+  version:
+    description: "Version override. If unset, uses the version from Chart.yaml"
+    required: false
+  repository:
+    description: "OCI repository namespace (e.g. agent-ix). Defaults to github.repository_owner"
+    required: false
+  artifact:
+    description: "Name of the output artifact"
+    required: false
+    default: "helm.json"
+
+outputs:
+  url:
+    value: ${{ steps.push.outputs.url }}
+  chart:
+    value: ${{ steps.info.outputs.chart }}
+  version:
+    value: ${{ steps.info.outputs.version }}
+  repository:
+    value: ${{ steps.push.outputs.repository }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Read chart info
+      id: info
+      shell: bash
+      run: |
+        CHART_YAML="${{ inputs.chart_path }}/Chart.yaml"
+        if [[ ! -f "$CHART_YAML" ]]; then
+          echo "Error: $CHART_YAML not found"
+          exit 1
+        fi
+
+        CHART_NAME=$(yq e '.name' "$CHART_YAML")
+        CHART_VERSION="${{ inputs.version }}"
+        if [[ -z "$CHART_VERSION" ]]; then
+          CHART_VERSION=$(yq e '.version' "$CHART_YAML")
+        fi
+
+        echo "chart=$CHART_NAME" >> "$GITHUB_OUTPUT"
+        echo "version=$CHART_VERSION" >> "$GITHUB_OUTPUT"
+
+    - name: Helm registry login
+      shell: bash
+      run: |
+        echo "${{ inputs.registry_password }}" | \
+          helm registry login "${{ inputs.registry }}" \
+            --username "${{ inputs.registry_user }}" \
+            --password-stdin
+
+    - name: Package chart
+      id: package
+      shell: bash
+      run: |
+        VERSION="${{ steps.info.outputs.version }}"
+        helm package "${{ inputs.chart_path }}" --version "$VERSION"
+        PKG="${{ steps.info.outputs.chart }}-${VERSION}.tgz"
+        echo "package=$PKG" >> "$GITHUB_OUTPUT"
+
+    - name: Push chart
+      id: push
+      shell: bash
+      run: |
+        REPO="${{ inputs.repository || github.repository_owner }}"
+        OCI_URL="oci://${{ inputs.registry }}/$REPO"
+        helm push "${{ steps.package.outputs.package }}" "$OCI_URL"
+
+        FULL_URL="${OCI_URL}/${{ steps.info.outputs.chart }}:${{ steps.info.outputs.version }}"
+        echo "url=$FULL_URL" >> "$GITHUB_OUTPUT"
+        echo "repository=$REPO" >> "$GITHUB_OUTPUT"
+
+    - name: Write artifact
+      shell: bash
+      run: |
+        cat <<EOF > ${{ inputs.artifact }}
+        {
+          "registry": "${{ inputs.registry }}",
+          "repository": "${{ steps.push.outputs.repository }}",
+          "chart": "${{ steps.info.outputs.chart }}",
+          "version": "${{ steps.info.outputs.version }}",
+          "url": "${{ steps.push.outputs.url }}"
+        }
+        EOF
+
+        echo "Helm artifact:"
+        cat "${{ inputs.artifact }}"
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact }}
+        path: ${{ inputs.artifact }}
+
+    - name: Summary
+      shell: bash
+      run: |
+        URL="${{ steps.push.outputs.url }}"
+        cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+        ### Helm Chart Published
+
+        | Field | Value |
+        |-------|-------|
+        | Chart | \`${{ steps.info.outputs.chart }}\` |
+        | Version | \`${{ steps.info.outputs.version }}\` |
+        | URL | \`${URL}\` |
+
+        \`\`\`bash
+        helm pull ${URL}
+        \`\`\`
+        EOF
