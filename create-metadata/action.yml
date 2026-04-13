@@ -57,7 +57,7 @@ runs:
   using: "composite"
   steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Get Dist Tags
       id: dist_tags
@@ -110,7 +110,7 @@ runs:
       run: |
         jq -r 'to_entries[] | "\(.key)=\(.value)"' "${{ inputs.artifact }}" >> "$GITHUB_OUTPUT"
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v6
       with:
         name: ${{ inputs.artifact }}
         path: ${{ inputs.artifact }}

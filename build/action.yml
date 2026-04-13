@@ -55,10 +55,10 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       if: ${{ inputs.checkout != 'false' }}
 
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v6
       with:
         name: ${{ inputs.artifact }}
         path: .
