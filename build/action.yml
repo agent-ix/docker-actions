@@ -145,8 +145,29 @@ runs:
           exit 1
         fi
 
-    - name: Helm registry login
+    - name: Determine Helm publish eligibility
+      id: helm_gate
       if: ${{ inputs.helm_chart_path != '' }}
+      shell: bash
+      env:
+        CHART_VERSION: ${{ steps.meta.outputs.version }}
+      run: |
+        # Helm OCI publish requires a strict SemVer version. Skip cleanly on
+        # non-SemVer builds (e.g. dev builds from main, PR builds) so the rest
+        # of CI succeeds and tagged releases publish naturally.
+        if [[ "$CHART_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+          echo "Helm chart will be published at version $CHART_VERSION"
+        else
+          echo "publish=false" >> "$GITHUB_OUTPUT"
+          {
+            echo "### ⛵ Helm Chart Publish Skipped"
+            echo "- Reason: \`$CHART_VERSION\` is not a valid SemVer (tag the repo \`vX.Y.Z\` to publish)"
+          } >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+    - name: Helm registry login
+      if: ${{ inputs.helm_chart_path != '' && steps.helm_gate.outputs.publish == 'true' }}
       shell: bash
       run: |
         echo "${{ inputs.registry_password }}" | helm registry login "${{ inputs.helm_chart_registry }}" \
@@ -154,7 +175,7 @@ runs:
           --password-stdin
 
     - name: Package and push Helm chart
-      if: ${{ inputs.helm_chart_path != '' }}
+      if: ${{ inputs.helm_chart_path != '' && steps.helm_gate.outputs.publish == 'true' }}
       shell: bash
       env:
         CHART_PATH: ${{ inputs.helm_chart_path }}
@@ -174,7 +195,9 @@ runs:
           exit 1
         fi
         helm push "$CHART_PACKAGE" "oci://$CHART_REGISTRY/$CHART_REPOSITORY"
-        echo "### ⛵ Helm Chart Published" >> "$GITHUB_STEP_SUMMARY"
-        echo "- Chart path: \`$CHART_PATH\`" >> "$GITHUB_STEP_SUMMARY"
-        echo "- Version: \`$CHART_VERSION\`" >> "$GITHUB_STEP_SUMMARY"
-        echo "- OCI ref: \`oci://$CHART_REGISTRY/$CHART_REPOSITORY\`" >> "$GITHUB_STEP_SUMMARY"
+        {
+          echo "### ⛵ Helm Chart Published"
+          echo "- Chart path: \`$CHART_PATH\`"
+          echo "- Version: \`$CHART_VERSION\`"
+          echo "- OCI ref: \`oci://$CHART_REGISTRY/$CHART_REPOSITORY\`"
+        } >> "$GITHUB_STEP_SUMMARY"
