@@ -64,6 +64,7 @@ runs:
       uses: agent-ix/git-actions/get-dist-tags@main
       with:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        is_release: ${{ inputs.is_release }}
 
     - name: Compute and write image.json
       id: meta
