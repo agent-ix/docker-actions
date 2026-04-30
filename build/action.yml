@@ -152,12 +152,15 @@ runs:
       env:
         CHART_VERSION: ${{ steps.meta.outputs.version }}
       run: |
-        # Helm OCI publish requires a strict SemVer version. Skip cleanly on
-        # non-SemVer builds (e.g. dev builds from main, PR builds) so the rest
-        # of CI succeeds and tagged releases publish naturally.
-        if [[ "$CHART_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+        # Helm OCI publish requires a strict SemVer version. Strip any leading
+        # 'v' prefix (tags like v1.2.3 are common) before checking. Skip cleanly
+        # on non-SemVer builds (e.g. dev builds from main, PR builds) so the
+        # rest of CI succeeds and tagged releases publish naturally.
+        SEMVER="${CHART_VERSION#v}"
+        if [[ "$SEMVER" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
           echo "publish=true" >> "$GITHUB_OUTPUT"
-          echo "Helm chart will be published at version $CHART_VERSION"
+          echo "chart_version=$SEMVER" >> "$GITHUB_OUTPUT"
+          echo "Helm chart will be published at version $SEMVER"
         else
           echo "publish=false" >> "$GITHUB_OUTPUT"
           {
@@ -181,7 +184,7 @@ runs:
         CHART_PATH: ${{ inputs.helm_chart_path }}
         CHART_REGISTRY: ${{ inputs.helm_chart_registry }}
         CHART_REPOSITORY: ${{ inputs.helm_chart_repository }}
-        CHART_VERSION: ${{ steps.meta.outputs.version }}
+        CHART_VERSION: ${{ steps.helm_gate.outputs.chart_version }}
       run: |
         mkdir -p dist/charts
         helm dependency build "$CHART_PATH"
