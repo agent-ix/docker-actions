@@ -132,22 +132,28 @@ runs:
         extra_tags: ${{ steps.meta.outputs.extra_tags }}
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
 
-    - name: Set up Helm
-      if: ${{ inputs.helm_chart_path != '' }}
-      uses: azure/setup-helm@v4
-
-    - name: Validate Helm chart publish inputs
-      if: ${{ inputs.helm_chart_path != '' }}
+    - name: Auto-detect Helm chart
+      id: helm_detect
       shell: bash
       run: |
-        if [[ -z "${{ inputs.helm_chart_repository }}" ]]; then
-          echo "helm_chart_repository is required when helm_chart_path is set" >&2
-          exit 1
+        CHART_PATH="${{ inputs.helm_chart_path }}"
+        CHART_REPO="${{ inputs.helm_chart_repository }}"
+        if [[ -z "$CHART_PATH" && -d "helm" && -f "helm/Chart.yaml" ]]; then
+          CHART_PATH="helm"
         fi
+        if [[ -n "$CHART_PATH" && -z "$CHART_REPO" ]]; then
+          CHART_REPO="${{ github.repository }}"
+        fi
+        echo "path=$CHART_PATH" >> "$GITHUB_OUTPUT"
+        echo "repo=$CHART_REPO" >> "$GITHUB_OUTPUT"
+
+    - name: Set up Helm
+      if: ${{ steps.helm_detect.outputs.path != '' }}
+      uses: azure/setup-helm@v4
 
     - name: Determine Helm publish eligibility
       id: helm_gate
-      if: ${{ inputs.helm_chart_path != '' }}
+      if: ${{ steps.helm_detect.outputs.path != '' }}
       shell: bash
       env:
         CHART_VERSION: ${{ steps.meta.outputs.version }}
@@ -170,7 +176,7 @@ runs:
         fi
 
     - name: Helm registry login
-      if: ${{ inputs.helm_chart_path != '' && steps.helm_gate.outputs.publish == 'true' }}
+      if: ${{ steps.helm_detect.outputs.path != '' && steps.helm_gate.outputs.publish == 'true' }}
       shell: bash
       run: |
         echo "${{ inputs.registry_password }}" | helm registry login "${{ inputs.helm_chart_registry }}" \
@@ -178,12 +184,12 @@ runs:
           --password-stdin
 
     - name: Package and push Helm chart
-      if: ${{ inputs.helm_chart_path != '' && steps.helm_gate.outputs.publish == 'true' }}
+      if: ${{ steps.helm_detect.outputs.path != '' && steps.helm_gate.outputs.publish == 'true' }}
       shell: bash
       env:
-        CHART_PATH: ${{ inputs.helm_chart_path }}
+        CHART_PATH: ${{ steps.helm_detect.outputs.path }}
         CHART_REGISTRY: ${{ inputs.helm_chart_registry }}
-        CHART_REPOSITORY: ${{ inputs.helm_chart_repository }}
+        CHART_REPOSITORY: ${{ steps.helm_detect.outputs.repo }}
         CHART_VERSION: ${{ steps.helm_gate.outputs.chart_version }}
       run: |
         mkdir -p dist/charts
