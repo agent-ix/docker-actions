@@ -124,6 +124,23 @@ runs:
           org.opencontainers.image.description=${{ steps.meta.outputs.description }}
           org.opencontainers.image.version=${{ steps.meta.outputs.version }}
 
+    - name: Trivy image scan
+      uses: aquasecurity/trivy-action@0.28.0
+      with:
+        image-ref: ${{ steps.meta.outputs.url }}
+        format: sarif
+        output: trivy-image.sarif
+        severity: HIGH,CRITICAL
+        ignore-unfixed: true
+        exit-code: "0"
+
+    - name: Upload Trivy image SARIF
+      if: always() && hashFiles('trivy-image.sarif') != ''
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: trivy-image.sarif
+        category: trivy-image
+
     - name: Print image summary
       uses: agent-ix/docker-actions/ghcr-docker-summary@main
       with:
@@ -174,6 +191,24 @@ runs:
             echo "- Reason: \`$CHART_VERSION\` is not a valid SemVer (tag the repo \`vX.Y.Z\` to publish)"
           } >> "$GITHUB_STEP_SUMMARY"
         fi
+
+    - name: Trivy config scan (Helm chart)
+      if: ${{ steps.helm_detect.outputs.path != '' }}
+      uses: aquasecurity/trivy-action@0.28.0
+      with:
+        scan-type: config
+        scan-ref: ${{ steps.helm_detect.outputs.path }}
+        format: sarif
+        output: trivy-helm.sarif
+        severity: HIGH,CRITICAL
+        exit-code: "0"
+
+    - name: Upload Trivy Helm SARIF
+      if: ${{ steps.helm_detect.outputs.path != '' && hashFiles('trivy-helm.sarif') != '' }}
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: trivy-helm.sarif
+        category: trivy-helm
 
     - name: Helm registry login
       if: ${{ steps.helm_detect.outputs.path != '' && steps.helm_gate.outputs.publish == 'true' }}
