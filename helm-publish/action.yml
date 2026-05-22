@@ -60,7 +60,7 @@ runs:
         echo "version=$CHART_VERSION" >> "$GITHUB_OUTPUT"
 
     - name: Trivy config scan (Helm chart)
-      uses: aquasecurity/trivy-action@v0.28.0
+      uses: aquasecurity/trivy-action@v0.36.0
       with:
         scan-type: config
         scan-ref: ${{ inputs.chart_path }}
