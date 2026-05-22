@@ -136,6 +136,11 @@ runs:
 
     - name: Upload Trivy image SARIF
       if: always() && hashFiles('trivy-image.sarif') != ''
+      # SARIF upload needs `security-events: write`, which the caller workflow
+      # must grant. Don't fail the build when the caller hasn't — the scan
+      # itself already ran, and missing GitHub code-scanning ingestion is a
+      # reporting issue, not a build failure.
+      continue-on-error: true
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: trivy-image.sarif
@@ -205,6 +210,7 @@ runs:
 
     - name: Upload Trivy Helm SARIF
       if: ${{ steps.helm_detect.outputs.path != '' && hashFiles('trivy-helm.sarif') != '' }}
+      continue-on-error: true
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: trivy-helm.sarif
