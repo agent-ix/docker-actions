@@ -59,6 +59,23 @@ runs:
         echo "chart=$CHART_NAME" >> "$GITHUB_OUTPUT"
         echo "version=$CHART_VERSION" >> "$GITHUB_OUTPUT"
 
+    - name: Trivy config scan (Helm chart)
+      uses: aquasecurity/trivy-action@0.28.0
+      with:
+        scan-type: config
+        scan-ref: ${{ inputs.chart_path }}
+        format: sarif
+        output: trivy-helm.sarif
+        severity: HIGH,CRITICAL
+        exit-code: "0"
+
+    - name: Upload Trivy Helm SARIF
+      if: hashFiles('trivy-helm.sarif') != ''
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: trivy-helm.sarif
+        category: trivy-helm-publish
+
     - name: Helm registry login
       shell: bash
       run: |
