@@ -125,7 +125,7 @@ runs:
           org.opencontainers.image.version=${{ steps.meta.outputs.version }}
 
     - name: Trivy image scan
-      uses: aquasecurity/trivy-action@0.28.0
+      uses: aquasecurity/trivy-action@v0.28.0
       with:
         image-ref: ${{ steps.meta.outputs.url }}
         format: sarif
@@ -194,7 +194,7 @@ runs:
 
     - name: Trivy config scan (Helm chart)
       if: ${{ steps.helm_detect.outputs.path != '' }}
-      uses: aquasecurity/trivy-action@0.28.0
+      uses: aquasecurity/trivy-action@v0.28.0
       with:
         scan-type: config
         scan-ref: ${{ steps.helm_detect.outputs.path }}
