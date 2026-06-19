@@ -35,6 +35,10 @@ inputs:
     description: "NPM registry auth token for @agent-ix scoped packages"
     required: false
     default: ""
+  platforms:
+    description: "Target platforms for the build (comma-separated, e.g. linux/amd64,linux/arm64)"
+    required: false
+    default: "linux/amd64,linux/arm64"
   checkout:
     description: "Whether to checkout the repository before building"
     required: false
@@ -99,6 +103,9 @@ runs:
         username: ${{ inputs.registry_user }}
         password: ${{ inputs.registry_password }}
 
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
@@ -107,6 +114,7 @@ runs:
       with:
         context: .
         push: true
+        platforms: ${{ inputs.platforms }}
         tags: ${{ steps.tags.outputs.tags }}
         cache-from: type=registry,ref=${{ steps.meta.outputs.image }}:buildcache
         cache-to: type=registry,ref=${{ steps.meta.outputs.image }}:buildcache,mode=max
@@ -128,6 +136,7 @@ runs:
       uses: aquasecurity/trivy-action@v0.36.0
       with:
         image-ref: ${{ steps.meta.outputs.url }}
+        platform: linux/amd64
         format: sarif
         output: trivy-image.sarif
         severity: HIGH,CRITICAL
