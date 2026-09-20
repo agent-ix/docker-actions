@@ -1,5 +1,7 @@
 # 🛠 Docker Actions
 
+[![Discord](https://img.shields.io/badge/Discord-Join%20us-5865F2?logo=discord&logoColor=white)](https://discord.gg/6qsdhSPE)
+
 > A set of composite GitHub Actions for authenticated Docker image builds, pulls, Helm chart publishing, and registry summary output using metadata artifacts.
 
 ---
